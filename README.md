@@ -6,5 +6,5 @@ A scalable serverless solution built on AWS to automate file processing, from up
 This repository contains code for a serverless file processing pipeline that:
 - Uploads files to **Amazon S3**.
 - Automatically triggers **AWS Lambda** functions to process the uploaded files.
-- Logs processing results and stores metadata in **Amazon DynamoDB**.
+- Logs processing results using **Amazon CloudWatch** and stores metadata in **Amazon DynamoDB**.
 - Provides a scalable and cost-effective solution without the need for managing traditional servers.
