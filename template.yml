@@ -1,0 +1,53 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Serverless File Processing Pipeline
+
+Resources:
+  # S3 Bucket for File Uploads
+  FileUploadBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: file-upload-pipeline-bucket
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:*
+            Function: !GetAtt FileProcessorFunction.Arn
+
+  # Lambda Function to Process Files
+  FileProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: file_processor/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Timeout: 30
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref FileProcessingLogsTable
+          BUCKET_NAME: !Ref FileUploadBucket
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref FileUploadBucket
+        - DynamoDBCrudPolicy:
+            TableName: !Ref FileProcessingLogsTable
+
+  # DynamoDB Table to Store Processing Logs
+  FileProcessingLogsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: FileProcessingLogs
+      AttributeDefinitions:
+        - AttributeName: FileName
+          AttributeType: S
+      KeySchema:
+        - AttributeName: FileName
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+Outputs:
+  FileUploadBucketName:
+    Description: S3 Bucket Name for file uploads
+    Value: !Ref FileUploadBucket
+  FileProcessingLogsTableName:
+    Description: DynamoDB Table Name for logs
+    Value: !Ref FileProcessingLogsTable
